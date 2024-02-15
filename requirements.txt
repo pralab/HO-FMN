@@ -1,11 +1,8 @@
-torch>=1.8.0
-torchvision>=0.9.0
-tqdm>=4.48.0
-visdom>=0.1.8
+torch==2.1.0
+torchvision
 matplotlib
-numpy
-ray[tune]>=2.3.1
-ray[air]>=2.3.1
-ray[rllib]>=2.3.1
-flaml
 git+https://github.com/RobustBench/robustbench.git
+
+ax-platform
+ax-platform[mysql]
+sqlalchemy==1.4.50
