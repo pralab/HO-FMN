@@ -1,67 +1,45 @@
-import numpy as np
+"""
+Search Space definition for the Ax Tuner
+"""
 
-from ray import tune
-
-
-OPTIMIZERS_SEARCH_TUNE = {
+OPTIMIZER_PARAMS = {
     'SGD': {
-        'lr': tune.loguniform(1, 100),
-        'momentum': tune.uniform(0.81, 0.99),
-        'weight_decay': tune.loguniform(0.01, 1),
-        'dampening': tune.uniform(0, 0.2)
-    },
-    'SGDNesterov': {
-        'lr': tune.loguniform(1, 100),
-        'momentum': tune.uniform(0.81, 0.99),
-        'weight_decay': tune.loguniform(0.01, 1),
-        'dampening': 0,
-        'nesterov': True
+        'lr': {"name": "lr", "type": "range", "bounds": [8/255, 10], "value_type": "float", "log_scale": True},
+        'momentum': {"name": "momentum", "type": "range", "bounds": [0.0, 0.9], "value_type": "float"},
+        'weight_decay': {"name": "weight_decay", "type": "range", "bounds": [0.01, 1.0], "value_type": "float"},
+        'dampening': {"name": "dampening", "type": "range", "bounds": [0.0, 0.2], "value_type": "float"}
     },
     'Adam':
     {
-        'lr': tune.loguniform(1, 100),
-        'weight_decay': tune.loguniform(0.01, 1),
-        'eps': 1e-8,
-        'amsgrad': False,
-        'betas': (0.9, 0.999)
+        'lr': {"name": "lr", "type": "range", "bounds": [8/255, 10], "value_type": "float", "log_scale": True},
+        'weight_decay': {"name": "weight_decay", "type": "range", "bounds": [0.01, 1.0], "value_type": "float"},
+        'eps': {"name": "eps", "type": "fixed", "value": 1e-8, "value_type": "float"},
+        'beta1': {"name": "beta1", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"},
+        'beta2': {"name": "beta2", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"}
     },
-    'AdamAmsgrad':
+    'Adamax':
     {
-        'lr': tune.loguniform(1, 100),
-        'eps': 1e-8,
-        'amsgrad': True,
-        'betas': (0.9, 0.999)
+        'lr': {"name": "lr", "type": "range", "bounds": [8/255, 10], "value_type": "float", "log_scale": True},
+        'weight_decay': {"name": "weight_decay", "type": "range", "bounds": [0.01, 1.0], "value_type": "float"},
+        'eps': {"name": "eps", "type": "fixed", "value": 1e-8, "value_type": "float"},
+        'beta1': {"name": "beta1", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"},
+        'beta2': {"name": "beta2", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"}
     }
 }
 
-SCHEDULERS_SEARCH_TUNE = {
-    'CosineAnnealingLR':
-        {
-            'T_max': lambda steps: steps,
-            'eta_min': 0,
-            'last_epoch': -1
-        },
-    'CosineAnnealingWarmRestarts':
-        {
-            'T_0': lambda steps: steps//2,
-            'T_mult': 1,
-            'eta_min': 0,
-            'last_epoch': -1
-        },
-    'MultiStepLR':
-        {
-            'milestones': lambda steps: tune.grid_search(
-                [tuple(np.linspace(0, steps, 10)),
-                 tuple(np.linspace(0, steps, 5)),
-                 tuple(np.linspace(0, steps, 3))]
-            ),
-            'gamma': tune.uniform(0.1, 0.9)
-        },
-    'ReduceLROnPlateau':
-        {
-            'factor': tune.uniform(0.1, 0.5),
-            'patience': tune.choice([5, 10, 20]),
-            'threshold': 1e-5
-        }
+SCHEDULER_PARAMS = {
+    'CALR': {
+        'T_max': lambda steps: {"name": "T_max", "type": "fixed", "value": steps, "value_type": "int"},
+        'eta_min':  {"name": "eta_min", "type": "fixed", "value": 0, "value_type": "int"},
+        'last_epoch': {"name": "last_epoch", "type": "fixed", "value": -1, "value_type": "int"}
+    },
+    'RLROPVec':
+    {
+        'batch_size': lambda bs: {"name": "batch_size", "type": "fixed", "value": bs, "value_type": "int"},
+        'factor': {"name": "factor", "type": "range", "bounds": [0.1, 0.5], "value_type": "float"},
+        'patience': {"name": "patience", "type": "choice", "values": [2, 5, 10], "value_type": "int"},
+        'threshold': {"name": "threshold", "type": "fixed", "value": 1e-4, "value_type": "float"},
+        'eps': {"name": "eps", "type": "fixed", "value": 1e-8, "value_type": "float"}
+    }
 }
 
