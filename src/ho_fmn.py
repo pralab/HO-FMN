@@ -15,7 +15,6 @@ from tuning.search_space import OPTIMIZER_PARAMS, SCHEDULER_PARAMS
 class HOFMN:
     def __init__(self,
                  model_id: int = 8,
-                 model_name: Optional[str] = None,
                  batch_size: int = 32,
                  loss: Literal['LL', 'CE', 'DLR'] = 'LL',
                  optimizer: Literal['SGD', 'Adam', 'Adamax'] = 'SGD',
@@ -62,7 +61,7 @@ class HOFMN:
                 self.sch_params['batch_size'] = self.sch_params['batch_size'](batch_size)
 
         # Create experiment name and folder
-        self.experiment_name = f'{self.model_name}_{self.batch_size}_{self.steps}_{self.n_trials}_{self.optimizer}_{self.scheduler}_{self.loss}'
+        self.experiment_name = f'{self.model_id}_{self.batch_size}_{self.steps}_{self.n_trials}_{self.optimizer}_{self.scheduler}_{self.loss}'
         if not os.path.exists(self.experiment_name):
             os.makedirs(self.experiment_name, exist_ok=True)
 
@@ -71,33 +70,27 @@ class HOFMN:
         Evaluate FMN with a given parametrization
         """
         optimizer_config = {k: parametrization[k] for k in set(self.opt_params)}
-        scheduler_config = None
-        if self.scheduler is not None:
-            scheduler_config = {k: parametrization[k] for k in set(self.sch_params)}
+        scheduler_config = {k: parametrization[k] for k in set(self.sch_params)} if self.scheduler else None
 
         attack = FMN(
             model=self.model,
             steps=self.steps,
             loss=self.loss,
-            device=self.device,
             optimizer=self.optimizer,
             scheduler=self.scheduler,
             norm=self.norm,
             optimizer_config=optimizer_config,
             scheduler_config=scheduler_config
         )
-
         best_adv = attack.forward(images=images, labels=labels)
 
         best_distance = torch.linalg.norm((best_adv - images).data.flatten(1), dim=1, ord=self.norm).clone().detach().cpu()
         best_distance = torch.where(best_distance > 0, best_distance, torch.tensor(float('inf')))
-
         evaluation = {'distance': (best_distance, 0.0)}
-
+        
         return evaluation
 
-
-    def tune(self, dataloader: torch.utils.data.DataLoader) -> dict:
+    def tune(self) -> dict:
         # Create Ax Experiment
         print("\t[Tuning] Creating the Ax client and experiment...")
         ax_client = AxClient()
@@ -125,6 +118,8 @@ class HOFMN:
             print(f"\t[Tuning] Running trial {i}")
 
             images, labels = next(iter(self.dataloader))
+            images, labels = images.to(self.device), labels.to(self.device)
+
             parameters, trial_index = ax_client.get_next_trial()
             ax_client.complete_trial(
                 trial_index=trial_index,
