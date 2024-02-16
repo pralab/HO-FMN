@@ -133,3 +133,11 @@ def linf_mid_points(x0, x1, epsilon):
     delta = (x1 - x0).flatten(1)
     return x0 + torch.maximum(torch.minimum(delta, epsilon, out=delta), -epsilon, out=delta).view_as(x0)
 
+
+DUAL_PROJECTION_MIDPOINTS = {
+    0: (None, l0_projection, l0_mid_points),
+    1: (float('inf'), l1_projection, l1_mid_points),
+    2: (2, l2_projection, l2_mid_points),
+    float('inf'): (1, linf_projection, linf_mid_points),
+}
+
