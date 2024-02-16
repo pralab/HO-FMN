@@ -1,13 +1,12 @@
 import math
-from typing import Optional, Literal
+from typing import Optional, Literal, Union
 
 import torch
 import torch.nn as nn
 from torch import Tensor
 
 from src.utils.fmn_config import *
-from src.utils.projection import l0_projection, l1_projection, linf_projection, l2_projection
-from src.utils.projection import l0_mid_points, l1_mid_points, l2_mid_points, linf_mid_points
+from src.utils.projection import DUAL_PROJECTION_MIDPOINTS
 
 
 class FMN:
@@ -33,8 +32,6 @@ class FMN:
         optimizer_config (tuple, list, optional): The configuration for the optimizer. Default is None.
         scheduler_config (tuple, list, optional): The configuration for the scheduler. Default is None.
         targeted (bool): Whether the attack is targeted or not. Default is ``False``.
-        verbose (bool): Whether to print log information or not. Default is ``False``.
-        device (torch.device): The device on which to run the model. Default is torch.device('cpu').
     """
 
     def __init__(self,
@@ -52,9 +49,7 @@ class FMN:
                  scheduler: Literal['CALR', 'RLROP', None] = 'CALR',
                  optimizer_config: Optional[tuple, list, None] = None,
                  scheduler_config: Optional[tuple, list, None] = None,
-                 targeted: bool = False,
-                 verbose: bool = False,
-                 device: torch.device = torch.device('cpu')
+                 targeted: bool = False
                  ):
         self.model = model
         self.norm = norm
@@ -67,8 +62,7 @@ class FMN:
         self.binary_search_steps = binary_search_steps
         self.targeted = targeted
         self.loss = loss
-        self.verbose = verbose
-        self.device = device
+        self.device = model.device
 
         self.loss = LOSSES.get(loss, LL)
         self.optimizer = OPTIMIZERS.get(optimizer, SGD)
@@ -76,51 +70,44 @@ class FMN:
         self.optimizer_config = optimizer_config
         self.scheduler_config = scheduler_config
 
-        self._dual_projection_mid_points = {
-            0: (None, l0_projection, l0_mid_points),
-            1: (float('inf'), l1_projection, l1_mid_points),
-            2: (2, l2_projection, l2_mid_points),
-            float('inf'): (1, linf_projection, linf_mid_points),
-        }
+        _, self.projection, self.mid_point = DUAL_PROJECTION_MIDPOINTS[self.norm]
 
-    def _boundary_search(self, images, labels):
+    def _boundary_search(self, images: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         batch_size = len(images)
-        _, _, mid_point = self._dual_projection_mid_points[self.norm]
-
-        is_adv = self.model(self.starting_points).argmax(dim=1)
+        pred_labels = self.model(self.starting_points).argmax(dim=1)
+        is_adv = (pred_labels == labels) if self.targeted else (pred_labels != labels)
         if not is_adv.all():
             raise ValueError('Starting points are not all adversarial.')
+
         lower_bound = torch.zeros(batch_size, device=self.device)
         upper_bound = torch.ones(batch_size, device=self.device)
         for _ in range(self.binary_search_steps):
             epsilon = (lower_bound + upper_bound) / 2
-            mid_points = mid_point(x0=images, x1=self.starting_points, epsilon=epsilon)
+            mid_points = self.mid_point(x0=images, x1=self.starting_points, epsilon=epsilon)
             pred_labels = self.model(mid_points).argmax(dim=1)
             is_adv = (pred_labels == labels) if self.targeted else (pred_labels != labels)
             lower_bound = torch.where(is_adv, lower_bound, epsilon)
             upper_bound = torch.where(is_adv, epsilon, upper_bound)
 
-        delta = mid_point(x0=images, x1=self.starting_points, epsilon=epsilon) - images
+        delta = self.mid_point(x0=images, x1=self.starting_points, epsilon=upper_bound).sub_(images)
 
-        return delta, is_adv
+        return delta
 
-    def _initialization(self, images: torch.Tensor, labels: torch.Tensor):
+    def _init_epsilon_delta(self, images: torch.Tensor, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         batch_size = len(images)
         delta = torch.zeros_like(images, device=self.device)
         epsilon = torch.full((batch_size,), float('inf'), device=self.device)
-        is_adv = None
 
         if self.starting_points is not None:
-            delta, is_adv = self._boundary_search(images, labels)
+            delta = self._boundary_search(images, labels)
 
         if self.norm == 0:
             epsilon = torch.ones(batch_size, device=self.device) if self.starting_points is None else \
                                     delta.flatten(1).norm(p=0,dim=0)
 
-        delta.requires_grad_()
-        return epsilon, delta, is_adv
+        return epsilon, delta
 
-    def _init_optimizer(self, delta: torch.Tensor):
+    def _init_optimizer(self, delta: torch.Tensor) -> torch.optim.Optimizer:
         if self.optimizer_config is None:
             optimizer = self.optimizer([delta], lr=self.alpha_init)
         else:
@@ -134,7 +121,7 @@ class FMN:
 
         return optimizer
 
-    def _init_scheduler(self, optimizer: torch.optim, batch_size: int):
+    def _init_scheduler(self, optimizer: torch.optim, batch_size: int) -> torch.optim.lr_scheduler:
         scheduler = None
 
         if self.scheduler is not None:
@@ -157,20 +144,20 @@ class FMN:
         labels = labels.clone().detach().to(self.device)
         adv_images = images.clone().detach()
         batch_size = len(images)
-
-        dual, projection, _ = self._dual_projection_mid_points[self.norm]
         batch_view = lambda tensor: tensor.view(batch_size, *[1] * (images.ndim - 1))
-        epsilon, delta, is_adv = self._initialization(images, labels)
-        _worst_norm = torch.maximum(images, 1 - images).flatten(1).norm(p=self.norm, dim=1).detach()
+        multiplier = 1 if self.targeted else -1
 
+        _worst_norm = torch.maximum(images, 1 - images).flatten(1).norm(p=self.norm, dim=1).detach()
         init_trackers = {
-            'worst_norm': _worst_norm.to(self.device),
+            'worst_norm': _worst_norm.clone().to(self.device),
             'best_norm': _worst_norm.clone().to(self.device),
             'best_adv': adv_images,
             'adv_found': torch.zeros(batch_size, dtype=torch.bool, device=self.device)
         }
+        del _worst_norm
 
-        multiplier = 1 if self.targeted else -1
+        epsilon, delta = self._init_epsilon_delta(images, labels)
+        delta.requires_grad_()
 
         # Instantiate Loss, Optimizer and Scheduler (if not None)
         if issubclass(self.loss, CE):
@@ -227,10 +214,6 @@ class FMN:
             loss = loss_fn.forward(logits, labels)
             if isinstance(loss_fn, LL): loss = multiplier*loss
 
-            if self.verbose:
-                print(f"loss mean[{i}]:\n{loss.mean()}")
-                print(f"steps[{i}]:\n{steps}")
-
             # Optimizer Step (gradient ascent)
             if isinstance(scheduler, RLROPvec):
                 v_loss = torch.dot(loss, learning_rates)
@@ -246,7 +229,7 @@ class FMN:
             optimizer.step()
 
             # Project In-place
-            projection(delta=delta.data, epsilon=epsilon)
+            self.projection(delta=delta.data, epsilon=epsilon)
             # Clamp
             delta.data.add_(images).clamp_(min=0, max=1).sub_(images)
 
