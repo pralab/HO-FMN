@@ -103,3 +103,9 @@ def load_data(model_id=0, dataset_id=0, norm='inf'):
     dataset = load_dataset(dataset_name)
 
     return model, dataset, model_name, dataset_name
+
+
+def print_models_info():
+    print("Model ID\tName")
+    for model_id in MODEL_DATASET:
+        print(f"{model_id}\t\t\t{MODEL_DATASET[model_id]['model_name']}")

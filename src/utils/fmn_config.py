@@ -17,6 +17,20 @@ OPTIMIZERS = {
 
 SCHEDULERS = {
     'CALR': CosineAnnealingLR,
-    'RLROPVec': RLROPvec,
+    'RLROP': RLROPvec,
     None: None
 }
+
+
+def print_fmn_configs():
+    print("\nLosses:")
+    for loss in LOSSES.keys():
+        print(f"\t{loss}")
+
+    print("Optimizers:")
+    for optimizer in OPTIMIZERS.keys():
+        print(f"\t{optimizer}")
+
+    print("Schedulers:")
+    for scheduler in SCHEDULERS.keys():
+        if scheduler is not None: print(f"\t{scheduler}")
