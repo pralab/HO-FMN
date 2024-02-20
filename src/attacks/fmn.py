@@ -97,7 +97,7 @@ class FMN:
 
     def _init_epsilon_delta(self, images: torch.Tensor, labels: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         batch_size = len(images)
-        delta = torch.zeros_like(images, device=self.device)
+        delta = torch.zeros_like(images, device=self.device, requires_grad=True)
         epsilon = torch.full((batch_size,), float('inf'), device=self.device)
 
         if self.starting_points is not None:
@@ -144,19 +144,20 @@ class FMN:
     def forward(self, images: torch.Tensor, labels: torch.Tensor):
         images = images.clone().detach().to(self.device)
         labels = labels.clone().detach().to(self.device)
+        
         adv_images = images.clone().detach().to(self.device)
+        
         batch_size = len(images)
         batch_view = lambda tensor: tensor.view(batch_size, *[1] * (images.ndim - 1))
         multiplier = 1 if self.targeted else -1
 
         _worst_norm = torch.maximum(images, 1 - images).flatten(1).norm(p=self.norm, dim=1).detach()
         init_trackers = {
-            'worst_norm': _worst_norm.clone().to(self.device),
+            'worst_norm': _worst_norm.to(self.device),
             'best_norm': _worst_norm.clone().to(self.device),
             'best_adv': adv_images,
             'adv_found': torch.zeros(batch_size, dtype=torch.bool, device=self.device)
         }
-        del _worst_norm
 
         epsilon, delta = self._init_epsilon_delta(images, labels)
         delta.requires_grad_()
@@ -234,7 +235,7 @@ class FMN:
 
             # Scheduler Step
             if scheduler is not None and isinstance(scheduler, RLROP):
-                steps = scheduler.step(loss, learning_rates)
+                learning_rates = scheduler.step(loss, learning_rates)
             else:
                 scheduler.step()
 

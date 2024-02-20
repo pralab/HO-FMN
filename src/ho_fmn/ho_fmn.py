@@ -95,7 +95,7 @@ class HOFMN:
 
     def _evaluate(self, parametrization: dict, images: torch.Tensor, labels: torch.Tensor) -> dict:
         """
-        Evaluate the Feedforward Neural Network (FMN) with a given parametrization.
+        Evaluate FMN with a given parametrization.
 
         Parameters:
             parametrization (dict): A dictionary containing the parameters of the FMN.
