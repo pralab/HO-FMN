@@ -130,11 +130,11 @@ class FMN:
             if self.scheduler_config is None:
                 if issubclass(self.scheduler, CosineAnnealingLR):
                     scheduler = self.scheduler(optimizer, T_max=self.steps, eta_min=self.alpha_final)
-                elif issubclass(self.scheduler, RLROPvec):
+                elif issubclass(self.scheduler, RLROP):
                     scheduler = self.scheduler(batch_size=batch_size, verbose=self.verbose, device=self.device)
                 else:
                     scheduler = self.scheduler(optimizer, min_lr=self.alpha_final)
-            elif not issubclass(self.scheduler, RLROPvec):
+            elif not issubclass(self.scheduler, RLROP):
                 scheduler = self.scheduler(optimizer, **self.scheduler_config)
             else:
                 scheduler = self.scheduler(verbose=self.verbose, device=self.device, **self.scheduler_config)
@@ -170,7 +170,7 @@ class FMN:
         optimizer = self._init_optimizer(delta)
         scheduler = self._init_scheduler(optimizer, batch_size)
 
-        if scheduler is not None and isinstance(scheduler, RLROPvec):
+        if scheduler is not None and isinstance(scheduler, ):
             learning_rates = torch.ones(batch_size) * optimizer.param_groups[0]['lr']
             learning_rates = learning_rates.to(self.device)
 
@@ -214,7 +214,7 @@ class FMN:
             if isinstance(loss_fn, LL): loss = multiplier*loss
 
             # Optimizer Step (gradient ascent)
-            if isinstance(scheduler, RLROPvec):
+            if isinstance(scheduler, RLROP):
                 v_loss = torch.dot(loss, learning_rates)
                 v_loss.backward()
             else:
@@ -233,7 +233,7 @@ class FMN:
             delta.data.add_(images).clamp_(min=0, max=1).sub_(images)
 
             # Scheduler Step
-            if scheduler is not None and isinstance(scheduler, RLROPvec):
+            if scheduler is not None and isinstance(scheduler, RLROP):
                 steps = scheduler.step(loss, learning_rates)
             else:
                 scheduler.step()
