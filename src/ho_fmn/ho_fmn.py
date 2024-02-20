@@ -115,7 +115,8 @@ class HOFMN:
             scheduler=self.scheduler,
             norm=self.norm,
             optimizer_config=optimizer_config,
-            scheduler_config=scheduler_config
+            scheduler_config=scheduler_config,
+            device=self.device
         )
         best_adv = attack.forward(images=images, labels=labels)
         best_adv = best_adv.to(self.device)

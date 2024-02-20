@@ -1,7 +1,7 @@
 from src.utils.loss import LL, DLR, CE
 from torch.optim import SGD, Adam, Adamax
 from torch.optim.lr_scheduler import CosineAnnealingLR
-from src.schedulers.RLROP_vec import ReduceLROnPlateau as RLROPvec
+from src.schedulers.RLROP_vec import ReduceLROnPlateau as RLROP
 
 LOSSES = {
     'LL': LL,
@@ -17,7 +17,7 @@ OPTIMIZERS = {
 
 SCHEDULERS = {
     'CALR': CosineAnnealingLR,
-    'RLROP': RLROPvec,
+    'RLROP': RLROP,
     None: None
 }
 
