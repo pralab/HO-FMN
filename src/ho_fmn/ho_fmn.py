@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from ax.service.ax_client import AxClient
 from ax.service.utils.instantiation import ObjectiveProperties
 
-from fmn import FMN
+from src.attacks.fmn import FMN
 from .search_space import OPTIMIZER_PARAMS, SCHEDULER_PARAMS
 
 

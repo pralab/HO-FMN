@@ -16,7 +16,7 @@ class FMN:
 
     Distance Measure : L0, L1, L2, Linf
 
-    Args:
+    Parameters:
         model (nn.Module): The neural network model to be attacked.
         norm (float): The norm for the distance measure. Default: Linf (float('inf'))
         steps (int): The number of optimization steps. Default: 100
@@ -29,9 +29,10 @@ class FMN:
         loss (Literal['LL', 'CE', 'DLR']): The type of loss function to be used. Default is 'LL'.
         optimizer (Literal['SGD', 'Adam', 'Adamax']): The optimizer to be used. Default is 'SGD'.
         scheduler (Literal['CALR', 'RLROP', None]): The learning rate scheduler to be used. Default is 'CALR'.
-        optimizer_config (tuple, list, optional): The configuration for the optimizer. Default is None.
-        scheduler_config (tuple, list, optional): The configuration for the scheduler. Default is None.
+        optimizer_config (dict, optional): The configuration for the optimizer. Default is None.
+        scheduler_config (dict, optional): The configuration for the scheduler. Default is None.
         targeted (bool): Whether the attack is targeted or not. Default is ``False``.
+        device (torch.device): Device to use. Default is torch.device('cpu').
     """
 
     def __init__(self,
@@ -39,17 +40,18 @@ class FMN:
                  norm: float = torch.inf,
                  steps: int = 10,
                  alpha_init: float = 1.0,
-                 alpha_final: Optional[float, None] = None,
+                 alpha_final: Optional[Union[float, None]] = None,
                  gamma_init: float = 0.05,
                  gamma_final: float = 0.001,
                  binary_search_steps: int = 10,
-                 starting_points: Optional[Tensor, None] = None,
+                 starting_points: Optional[Union[Tensor, None]] = None,
                  loss: Literal['LL', 'CE', 'DLR'] = 'LL',
                  optimizer: Literal['SGD', 'Adam', 'Adamax'] = 'SGD',
                  scheduler: Literal['CALR', 'RLROP', None] = 'CALR',
-                 optimizer_config: Optional[tuple, list, None] = None,
-                 scheduler_config: Optional[tuple, list, None] = None,
-                 targeted: bool = False
+                 optimizer_config: Optional[dict] = None,
+                 scheduler_config: Optional[dict] = None,
+                 targeted: bool = False,
+                 device: torch.device = torch.device('cpu')
                  ):
         self.model = model
         self.norm = norm
@@ -62,7 +64,7 @@ class FMN:
         self.binary_search_steps = binary_search_steps
         self.targeted = targeted
         self.loss = loss
-        self.device = model.device
+        self.device = device
 
         self.loss = LOSSES.get(loss, LL)
         self.optimizer = OPTIMIZERS.get(optimizer, SGD)
@@ -193,9 +195,6 @@ class FMN:
             init_trackers['best_norm'] = torch.where(is_both, delta_norm, init_trackers['best_norm'])
             init_trackers['best_adv'] = torch.where(batch_view(is_both), adv_images.detach(),
                                                     init_trackers['best_adv'])
-
-            if self.verbose:
-                print(f"LR: {optimizer.param_groups[0]['lr']}")
 
             if self.norm == 0:
                 epsilon = torch.where(is_adv,
