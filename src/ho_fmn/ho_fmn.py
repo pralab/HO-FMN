@@ -47,7 +47,7 @@ class HOFMN:
             verbose (bool): Whether to print verbose information during optimization. Default is False.
             device (torch.device): Device to run the optimization on. Default is torch.device('cpu').
         """
-        self.model = model.eval()
+        self.model = model
         self.dataloader = dataloader
         self.exp_path = exp_path
         self.batch_size = batch_size
@@ -61,7 +61,7 @@ class HOFMN:
         self.verbose = verbose
         self.device = device
 
-        self.model.to(self.device)
+        self.model = self.model.to(self.device)
         self.model.eval()
 
         # Retrieve optimizer and scheduler params

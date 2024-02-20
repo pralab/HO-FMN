@@ -144,7 +144,7 @@ class FMN:
     def forward(self, images: torch.Tensor, labels: torch.Tensor):
         images = images.clone().detach().to(self.device)
         labels = labels.clone().detach().to(self.device)
-        adv_images = images.clone().detach()
+        adv_images = images.clone().detach().to(self.device)
         batch_size = len(images)
         batch_view = lambda tensor: tensor.view(batch_size, *[1] * (images.ndim - 1))
         multiplier = 1 if self.targeted else -1
