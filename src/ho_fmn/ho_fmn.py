@@ -61,7 +61,8 @@ class HOFMN:
         self.verbose = verbose
         self.device = device
 
-        self.model = self.model.to(self.device)
+        self.model.to(self.device)
+        self.model.eval()
 
         # Retrieve optimizer and scheduler params
         self.opt_params = OPTIMIZER_PARAMS[optimizer]
@@ -117,10 +118,11 @@ class HOFMN:
             scheduler_config=scheduler_config
         )
         best_adv = attack.forward(images=images, labels=labels)
+        best_adv = best_adv.to(self.device)
 
-        best_distance = torch.linalg.norm((best_adv - images).data.flatten(1), dim=1, ord=self.norm).clone().detach().cpu()
+        best_distance = torch.linalg.norm((best_adv - images).data.flatten(1), dim=1, ord=self.norm).clone().detach()
         best_distance = torch.where(best_distance > 0, best_distance, torch.tensor(float('inf')))
-        evaluation = {'distance': (best_distance, 0.0)}
+        evaluation = {'distance': (best_distance.item(), 0.0)}
         
         return evaluation
 
