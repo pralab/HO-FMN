@@ -211,7 +211,7 @@ class FMN:
                                                   float('inf'))
                                       )
 
-            loss = loss_fn.forward(logits, labels)
+            loss = -loss_fn.forward(logits, labels)
             if isinstance(loss_fn, LL): loss = multiplier*loss
 
             # Optimizer Step (gradient ascent)
