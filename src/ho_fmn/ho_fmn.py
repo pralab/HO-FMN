@@ -65,10 +65,10 @@ class HOFMN:
         self.model.eval()
 
         # Retrieve optimizer and scheduler params
-        self.opt_params = OPTIMIZER_PARAMS[optimizer]
+        self.opt_params = OPTIMIZER_PARAMS[optimizer].copy()
         self.sch_params = None
         if scheduler is not None:
-            self.sch_params = SCHEDULER_PARAMS[scheduler]
+            self.sch_params = SCHEDULER_PARAMS[scheduler].copy()
             if 'T_max' in self.sch_params:
                 self.sch_params['T_max'] = self.sch_params['T_max'](steps)
             if 'batch_size' in self.sch_params:
@@ -123,7 +123,7 @@ class HOFMN:
 
         best_distance = torch.linalg.norm((best_adv - images).data.flatten(1), dim=1, ord=self.norm).clone().detach()
         best_distance = torch.where(best_distance > 0, best_distance, torch.tensor(float('inf')))
-        evaluation = {'distance': (best_distance.item(), 0.0)}
+        evaluation = {'distance': (best_distance.median().item(), 0.0)}
         
         return evaluation
 

@@ -170,7 +170,7 @@ class FMN:
         optimizer = self._init_optimizer(delta)
         scheduler = self._init_scheduler(optimizer, batch_size)
 
-        if scheduler is not None and isinstance(scheduler, ):
+        if scheduler is not None and isinstance(scheduler, RLROP):
             learning_rates = torch.ones(batch_size) * optimizer.param_groups[0]['lr']
             learning_rates = learning_rates.to(self.device)
 
