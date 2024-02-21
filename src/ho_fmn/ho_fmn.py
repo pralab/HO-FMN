@@ -7,6 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from ax.service.ax_client import AxClient
 from ax.service.utils.instantiation import ObjectiveProperties
+from ax.modelbridge.base import ModelBridge
 
 from src.attacks.fmn import FMN
 from .search_space import OPTIMIZER_PARAMS, SCHEDULER_PARAMS
@@ -87,6 +88,21 @@ class HOFMN:
 
         self.ax_client = None
 
+    def get_tuning_model(self) -> ModelBridge:
+        """
+        Get the predictive model obtained from the tuning process.
+
+        Parameters:
+            None.
+        Returns:
+            model (ModelBridge): The predictive model.
+        """
+        model = None
+        if self.ax_client is not None:
+            model = self.ax_client.generation_strategy.model
+
+        return model
+
     def parametrization_to_configs(self, parametrization):
         optimizer_config = {k: parametrization[k] for k in set(self.opt_params)}
         scheduler_config = {k: parametrization[k] for k in set(self.sch_params)} if self.scheduler else None
@@ -131,7 +147,8 @@ class HOFMN:
         """
         Tune the hyperparameters of the FMN attack given a model, a loss function, an optimizer and a scheduler.
 
-        Params: None.
+        Parameters:
+            None.
         Returns: A dictionary containing the best parameters found during the HO.
         """
 
