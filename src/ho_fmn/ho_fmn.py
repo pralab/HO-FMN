@@ -102,9 +102,18 @@ class HOFMN:
 
         return model
 
-    def parametrization_to_configs(self, parametrization):
+    def parametrization_to_configs(self,
+                                   parametrization: dict,
+                                   steps: Optional[int] = None,
+                                   batch_size: Optional[int] = None,
+                                   ) -> tuple[dict, dict]:
         optimizer_config = {k: parametrization[k] for k in set(self.opt_params)}
         scheduler_config = {k: parametrization[k] for k in set(self.sch_params)} if self.scheduler else None
+
+        if steps is not None and 'T_max' in self.sch_params:
+            self.sch_params['T_max']['value'] = steps
+        if batch_size is not None and 'batch_size' in self.sch_params:
+            self.sch_params['batch_size']['value'] = batch_size
 
         return optimizer_config, scheduler_config
 
