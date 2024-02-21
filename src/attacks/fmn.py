@@ -68,7 +68,10 @@ class FMN:
 
         self.loss = LOSSES.get(loss, LL)
         self.optimizer = OPTIMIZERS.get(optimizer, SGD)
-        self.scheduler = SCHEDULERS.get(scheduler, CosineAnnealingLR)
+        if scheduler is not None:
+            self.scheduler = SCHEDULERS.get(scheduler, CosineAnnealingLR)
+        else:
+            self.scheduler = None
         self.optimizer_config = optimizer_config
         self.scheduler_config = scheduler_config
 
