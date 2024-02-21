@@ -72,7 +72,7 @@ class HOFMN:
             if 'T_max' in self.sch_params:
                 self.sch_params['T_max'] = self.sch_params['T_max'](steps)
             if 'batch_size' in self.sch_params:
-                self.sch_params['batch_size'] = self.sch_params['batch_size'](batch_size)
+                self.sch_params['batch_size'] = self.sch_params['batch_size'](self.batch_size)
 
         # Create experiment name and folder
         self.exp_path = exp_path
