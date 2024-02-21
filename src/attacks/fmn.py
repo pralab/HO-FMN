@@ -137,13 +137,13 @@ class FMN:
                 if issubclass(self.scheduler, CosineAnnealingLR):
                     scheduler = self.scheduler(optimizer, T_max=self.steps, eta_min=self.alpha_final)
                 elif issubclass(self.scheduler, RLROP):
-                    scheduler = self.scheduler(batch_size=batch_size, verbose=self.verbose, device=self.device)
+                    scheduler = self.scheduler(batch_size=batch_size, device=self.device)
                 else:
                     scheduler = self.scheduler(optimizer, min_lr=self.alpha_final)
             elif not issubclass(self.scheduler, RLROP):
                 scheduler = self.scheduler(optimizer, **self.scheduler_config)
             else:
-                scheduler = self.scheduler(verbose=self.verbose, device=self.device, **self.scheduler_config)
+                scheduler = self.scheduler(device=self.device, **self.scheduler_config)
 
         return scheduler
 
