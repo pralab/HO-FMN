@@ -13,7 +13,6 @@ OPTIMIZER_PARAMS = {
     {
         'lr': {"name": "lr", "type": "range", "bounds": [8/255, 10], "value_type": "float", "log_scale": True},
         'weight_decay': {"name": "weight_decay", "type": "range", "bounds": [0.01, 1.0], "value_type": "float"},
-        'eps': {"name": "eps", "type": "fixed", "value": 1e-8, "value_type": "float"},
         'beta1': {"name": "beta1", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"},
         'beta2': {"name": "beta2", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"}
     },
@@ -21,7 +20,6 @@ OPTIMIZER_PARAMS = {
     {
         'lr': {"name": "lr", "type": "range", "bounds": [8/255, 10], "value_type": "float", "log_scale": True},
         'weight_decay': {"name": "weight_decay", "type": "range", "bounds": [0.01, 1.0], "value_type": "float"},
-        'eps': {"name": "eps", "type": "fixed", "value": 1e-8, "value_type": "float"},
         'beta1': {"name": "beta1", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"},
         'beta2': {"name": "beta2", "type": "range", "bounds": [0.0, 0.999], "value_type": "float"}
     }
