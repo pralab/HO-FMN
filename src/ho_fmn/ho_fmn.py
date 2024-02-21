@@ -66,10 +66,10 @@ class HOFMN:
         self.model.eval()
 
         # Retrieve optimizer and scheduler params
-        self.opt_params = OPTIMIZER_PARAMS[optimizer].copy()
+        self.opt_params = OPTIMIZER_PARAMS.get(optimizer, 'SGD').copy()
         self.sch_params = None
         if scheduler is not None:
-            self.sch_params = SCHEDULER_PARAMS[scheduler].copy()
+            self.sch_params = SCHEDULER_PARAMS.get(scheduler, 'CALR').copy()
             if 'T_max' in self.sch_params:
                 self.sch_params['T_max'] = self.sch_params['T_max'](steps)
             if 'batch_size' in self.sch_params:
