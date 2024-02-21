@@ -155,7 +155,7 @@ class HOFMN:
         # Create Ax Experiment
         if self.verbose:
             print("\t[Tuning] Creating the Ax client and experiment...")
-        ax_client = AxClient()
+        self.ax_client = AxClient()
 
         # Defining the Search Space
         if self.scheduler is not None:
@@ -169,7 +169,7 @@ class HOFMN:
         }
 
         # Create an experiment with required arguments: name, parameters, and objective_name.
-        ax_client.create_experiment(
+        self.ax_client.create_experiment(
             name=self.exp_name,
             parameters=params,
             objectives=objectives
@@ -187,8 +187,8 @@ class HOFMN:
                 images, labels = next(iter(self.dataloader))
             images, labels = images.to(self.device), labels.to(self.device)
 
-            parameters, trial_index = ax_client.get_next_trial()
-            ax_client.complete_trial(
+            parameters, trial_index = self.ax_client.get_next_trial()
+            self.ax_client.complete_trial(
                 trial_index=trial_index,
                 raw_data=self._evaluate(parameters, images, labels)
             )
@@ -196,10 +196,9 @@ class HOFMN:
         if self.verbose:
             print("\t[Tuning] Finished the Hyperparameters Optimization; printing the trials"
                   "list and best parameters...")
-            print(ax_client.get_trials_data_frame())
+            print(self.ax_client.get_trials_data_frame())
 
-        self.ax_client = ax_client
-        best_parameters, values = ax_client.get_best_parameters()
+        best_parameters, values = self.ax_client.get_best_parameters()
 
         if self.verbose:
             print("\t[Tuning] Best parameters: ", best_parameters)
@@ -208,6 +207,6 @@ class HOFMN:
         current_date = datetime.now()
         formatted_date = current_date.strftime("%d%m%y%H")
         exp_json_path = os.path.join(self.exp_path, f'{formatted_date}_{self.exp_name}.json')
-        ax_client.save_to_json_file(filepath=exp_json_path)
+        self.ax_client.save_to_json_file(filepath=exp_json_path)
 
         return best_parameters
