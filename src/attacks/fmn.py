@@ -237,9 +237,10 @@ class FMN:
             delta.data.add_(images).clamp_(min=0, max=1).sub_(images)
 
             # Scheduler Step
-            if scheduler is not None and isinstance(scheduler, RLROP):
-                learning_rates = scheduler.step(loss, learning_rates)
-            else:
-                scheduler.step()
+            if scheduler is not None:
+                if isinstance(scheduler, RLROP):
+                    learning_rates = scheduler.step(loss, learning_rates)
+                else:
+                    scheduler.step()
 
         return init_trackers['best_adv']
