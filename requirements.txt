@@ -1,8 +1,8 @@
 torch==2.1.0
 torchvision
 matplotlib
-git+https://github.com/RobustBench/robustbench.git
-
 ax-platform
 ax-platform[mysql]
 sqlalchemy==1.4.50
+
+git+https://github.com/RobustBench/robustbench.git
