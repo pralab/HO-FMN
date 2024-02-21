@@ -33,7 +33,7 @@ SCHEDULER_PARAMS = {
         'eta_min':  {"name": "eta_min", "type": "fixed", "value": 0, "value_type": "int"},
         'last_epoch': {"name": "last_epoch", "type": "fixed", "value": -1, "value_type": "int"}
     },
-    'RLROPVec':
+    'RLROP':
     {
         'batch_size': lambda bs: {"name": "batch_size", "type": "fixed", "value": bs, "value_type": "int"},
         'factor': {"name": "factor", "type": "range", "bounds": [0.1, 0.5], "value_type": "float"},
