@@ -1,26 +1,26 @@
-# Improving Fast Minimum-Norm Attacks with Hyperparameter Optimization
+# HO-FMN: Hyperparameter Optimization for Fast Minimum-Norm Attacks
 
 This study proposes using hyperparameter optimization to improve fast minimum-norm attacks on machine-learning models
 
-:video_game: For a quick demo example, check out [this notebook](src/fmn_opt_demo.ipynb).
+:video_game: For a quick demo example, check out [this notebook](src/ho_fmn_demo.ipynb).
 
 ## How to tune FMN
 
 ```python
-from src.tuning.tune_fmn import tune_fmn
+from ho_fmn import tune_fmn
 from src.models.load_data import load_data
 
 # load the model and the dataset (default: CIFAR10)
 model, dataset = load_data(model_id=8)
 
-data_loader = ... # pytorch dataloader
+data_loader = ...  # pytorch dataloader
 
 batch_size = 10
 optimizer = 'SGD'
 scheduler = 'CosineAnnealingLR'
-steps = 10          # steps of the attack
-num_samples = 1     # numer of trials for searching
-loss = 'LL'         # default: logit loss
+steps = 10  # steps of the attack
+num_samples = 1  # numer of trials for searching
+loss = 'LL'  # default: logit loss
 
 fmn_best_config = tune_fmn(model=model,
                            data_loader=data_loader,
