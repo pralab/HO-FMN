@@ -19,7 +19,6 @@ class HOFMN:
                  dataloader: torch.utils.data.DataLoader,
                  exp_path: Optional[str] = '../experiments',
                  exp_name: Optional[Union[str, None]] = None,
-                 batch_size: int = 32,
                  loss: Literal['LL', 'CE', 'DLR'] = 'LL',
                  optimizer: Literal['SGD', 'Adam', 'Adamax'] = 'SGD',
                  scheduler: Literal['CALR', 'RLROP', None] = 'CALR',
@@ -51,7 +50,7 @@ class HOFMN:
         self.model = model
         self.dataloader = dataloader
         self.exp_path = exp_path
-        self.batch_size = batch_size
+        self.batch_size = self.dataloader.batch_size
         self.loss = loss
         self.optimizer = optimizer
         self.scheduler = scheduler

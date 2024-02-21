@@ -85,7 +85,6 @@ class ReduceLROnPlateau:
         new_steps = torch.maximum(steps * self.factor, self.min_steps)
         steps_improved = (steps - new_steps > self.eps)
         patience_exp_and_is_better = patience_expired & steps_improved
-        # patience_exp_and_is_better = patience_expired
         steps = torch.where(
             patience_exp_and_is_better,
             new_steps,
