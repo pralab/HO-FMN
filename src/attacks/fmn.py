@@ -66,6 +66,9 @@ class FMN:
         self.loss = loss
         self.device = device
 
+        self.model.to(self.device)
+        self.model.eval()
+
         self.loss = LOSSES.get(loss, LL)
         self.optimizer = OPTIMIZERS.get(optimizer, SGD)
         if scheduler is not None:
