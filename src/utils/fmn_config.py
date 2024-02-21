@@ -17,8 +17,7 @@ OPTIMIZERS = {
 
 SCHEDULERS = {
     'CALR': CosineAnnealingLR,
-    'RLROP': RLROP,
-    None: None
+    'RLROP': RLROP
 }
 
 
@@ -33,4 +32,4 @@ def print_fmn_configs():
 
     print("Schedulers:")
     for scheduler in SCHEDULERS.keys():
-        if scheduler is not None: print(f"\t{scheduler}")
+        print(f"\t{scheduler}")
