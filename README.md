@@ -1,7 +1,7 @@
 # HO-FMN: Hyperparameter Optimization for Fast Minimum-Norm Attacks
 
 In this work we present the HO-FMN method for optimizing the hyperparameters of the Fast Minimum-Norm (FMN)
- attack (FMN)[https://github.com/pralab/Fast-Minimum-Norm-FMN-Attack]. The FMN version used here is implemented in PyTorch,
+ attack [FMN](https://github.com/pralab/Fast-Minimum-Norm-FMN-Attack). The FMN version used here is implemented in PyTorch,
 and is modular, meaning that one can select the loss, the optimizer and the scheduler for the optimization.
 
 :video_game: For a quick demo example, check out [this notebook](src/ho_fmn_demo.ipynb).
