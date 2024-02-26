@@ -1,63 +1,114 @@
 # HO-FMN: Hyperparameter Optimization for Fast Minimum-Norm Attacks
 
-This study proposes using hyperparameter optimization to improve fast minimum-norm attacks on machine-learning models
+In this work we present the HO-FMN method for optimizing the hyperparameters of the Fast Minimum-Norm (FMN)
+ attack (FMN)[https://github.com/pralab/Fast-Minimum-Norm-FMN-Attack]. The FMN version used here is implemented in PyTorch,
+and is modular, meaning that one can select the loss, the optimizer and the scheduler for the optimization.
 
 :video_game: For a quick demo example, check out [this notebook](src/ho_fmn_demo.ipynb).
 
-## How to tune FMN
+## How to setup HO-FMN
 
 ```python
-from ho_fmn import tune_fmn
-from src.models.load_data import load_data
+import torch
+from torch.utils.data import DataLoader
+from src.ho_fmn.ho_fmn import HOFMN
+from src.attacks.fmn import FMN
+from src.utils.model_data import load_data
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+loss = 'DLR'          # losses: LL, DLR, CE
+optimizer = 'SGD'     # optimimzers: SGD, Adam, Adamax
+scheduler = 'RLROP'   # schedulers: CALR, RLROP
+
+steps = 100           # The number of FMN attack iterations
+trials = 32           # Number of HO optimization trials
+tuning_bs = 64        # Batch size for the tuning
+
+model_id = 8
 # load the model and the dataset (default: CIFAR10)
-model, dataset = load_data(model_id=8)
+model, dataset, _, _ = load_data(model_id=model_id)
+dataloader = DataLoader(dataset, batch_size=tuning_bs, shuffle=False)
 
-data_loader = ...  # pytorch dataloader
+ho_fmn = HOFMN(
+    model=model,
+    dataloader=dataloader,
+    loss=loss,
+    optimizer=optimizer,
+    scheduler=scheduler,
+    steps=steps,
+    trials=trials,
+    verbose=True,
+    device=device
+)
 
-batch_size = 10
-optimizer = 'SGD'
-scheduler = 'CosineAnnealingLR'
-steps = 10  # steps of the attack
-num_samples = 1  # numer of trials for searching
-loss = 'LL'  # default: logit loss
-
-fmn_best_config = tune_fmn(model=model,
-                           data_loader=data_loader,
-                           optimizer=optimizer,
-                           scheduler=scheduler,
-                           batch=batch_size,
-                           steps=steps,
-                           num_samples=num_samples,
-                           loss=loss)
+# Start the tuning process
+best_parameters = ho_fmn.tune()
+print(f"Best parameters:\n{best_parameters}")
 ```
 
-
-## Run FMN with best configuration
+## Run FMN with the best configuration
 
 ```python
-from src.attacks.fmn_opt import FMNOpt
+from src.attacks.fmn import FMN
 
-inputs, labels = next(iter(data_loader))
+# Compute the samples used for the tuning
+tuning_trials = trials
+tuning_samples = tuning_bs*tuning_trials
 
-fmn_attack = FMNOpt(model=model,
-                    inputs=inputs,
-                    labels=labels,
-                    norm='inf',
-                    steps=steps,
-                    optimizer=optimizer,
-                    scheduler=scheduler,
-                    optimizer_config=fmn_best_config['opt_s'],
-                    scheduler_config=fmn_best_config['sch_s'],
-                    logit_loss = True if loss == 'LL' else False)
+attack_bs = 128         # Attack batch size
+attack_steps = 200      # Attack steps
 
-_, best_adv = fmn_attack.run(log=True)
+# Reload the model and the dataset
+model, dataset, _, _ = load_data(model_id=model_id)
+
+subset_indices = list(range(tuning_samples, tuning_samples + attack_bs))
+dataset_frac = torch.utils.data.Subset(dataset, subset_indices)
+
+print(f"Samples: {len(subset_indices)}")
+
+dataloader = DataLoader(
+    dataset=dataset_frac,
+    batch_size=attack_bs,
+    shuffle=False
+)
+
+# Extract the optimizer and scheduler config from the best params dictionary
+optimizer_config, scheduler_config = ho_fmn.parametrization_to_configs(best_parameters,
+                                                                       batch_size=attack_bs,
+                                                                       steps=attack_steps)
+
+model.eval()
+model.to(device)
+
+tuned_attack = FMN(
+        model=model,
+        steps=attack_steps,
+        loss=loss,
+        optimizer=optimizer,
+        scheduler=scheduler,
+        optimizer_config=optimizer_config,
+        scheduler_config=scheduler_config,
+        device=device
+        )
+
+# Testing on a single batch
+images, labels = next(iter(dataloader))
+tuned_best_adv = tuned_attack.forward(images=images, labels=labels)
 ```
 
-# Preview of the results
+# Tuning process insights
+It is possible to plot the objective metric (median distance, the predicted value) seeing hos it changes varying two hyperparameters (e.g., learning rate and momentum):
+```python
+from utils.plots import plot_contour
 
-These are results against a CIFAR10 ResNet18:
+# Extract the predictive model
+tuning_model = ho_fmn.get_tuning_model()
 
+# Change param_x, param_y accordingly
+plot_contour(model=tuning_model, param_x='lr', param_y='momentum', metric_name="distance")
+```
+
+And the results from the demo notebook is shown here:
 <p align="center">
-<img src="assets/images/HO-FMN_Linf.png" alt="LInf" style="width:700px;"/>
+<img src="assets/images/contour_tuning_demo.png" alt="LInf" style="width:700px;"/>
 <p>
