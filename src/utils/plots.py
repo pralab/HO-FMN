@@ -5,6 +5,7 @@ from matplotlib.ticker import ScalarFormatter
 from ax.plot.contour import plot_contour_plotly
 from ax.plot.slice import plot_slice_plotly
 
+import torch
 import numpy as np
 
 mpl.rc('font', size=40)
@@ -89,3 +90,37 @@ def plot_slice(model=None, param_name='lr', metric_name='distance'):
     ax.set_xlim(8/255, 10)
     ax.grid(color='white')
     plt.gca().xaxis.set_major_formatter(ScalarFormatter())
+
+
+def compare_adv_robustness(baseline_best_adv, tuned_best_adv, images):
+    figure, ax = plt.subplots(1, 1, figsize=(6, 4), dpi=120)
+
+    pert_sizes = torch.linspace(0, 0.15, 1000).unsqueeze(1)
+    norms = (tuned_best_adv.cpu() - images.cpu()).flatten(1).norm(torch.inf, dim=1)
+    base_norms = (baseline_best_adv.cpu() - images.cpu()).flatten(1).norm(torch.inf, dim=1)
+
+    rob_acc = (norms > 8 / 255).float().mean().item()
+    base_rob_acc = (base_norms > 8 / 255).float().mean().item()
+
+    acc = (norms > 0).float().mean().item()
+
+    print(f"Clean accuracy:\n\t{acc}")
+    print(f"Baseline Robust accuracy (at 8/255):\n\t{base_rob_acc}")
+    print(f"Robust accuracy (at 8/255):\n\t{rob_acc}")
+
+    base_norms = (base_norms > pert_sizes).float().mean(dim=1)
+    norms = (norms > pert_sizes).float().mean(dim=1)
+
+    ax.plot(pert_sizes, norms, color='blue', label='HO-FMN', lw=0.8)
+    ax.plot(pert_sizes, base_norms, color='grey', label='FMN', lw=0.8, linestyle='--')
+
+    ax.axvline(x=8 / 255, color='#EE004D', linewidth=1, linestyle='--')
+    ax.scatter(8 / 255, rob_acc, marker='s', color='red')
+
+    ax.grid(True)
+    ax.legend()
+
+    ax.set_xlim(0.0, 0.15)
+    ax.set_ylim(0.0, 1.0)
+
+    plt.show()

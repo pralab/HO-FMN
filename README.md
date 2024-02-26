@@ -80,6 +80,15 @@ optimizer_config, scheduler_config = ho_fmn.parametrization_to_configs(best_para
 model.eval()
 model.to(device)
 
+baseline_attack = FMN(
+        model=model,
+        steps=attack_steps,
+        loss='LL',
+        optimizer='SGD',
+        scheduler='CALR',
+        device=device
+        )
+
 tuned_attack = FMN(
         model=model,
         steps=attack_steps,
@@ -93,8 +102,23 @@ tuned_attack = FMN(
 
 # Testing on a single batch
 images, labels = next(iter(dataloader))
+
+# Run the baseline attack for comparing the adversarial robustness
+baseline_best_adv = baseline_attack.forward(images=images, labels=labels)
 tuned_best_adv = tuned_attack.forward(images=images, labels=labels)
 ```
+
+# Computing the robustness-perturbation curve (baseline vs tuned FMN)
+```python
+from src.utils.plots import compare_adv_robustness
+
+compare_adv_robustness(baseline_best_adv, tuned_best_adv, images)
+```
+
+An example of baseline vs tuned FMN robustness-perturbation curves is shown here:
+<p align="center">
+<img src="assets/images/baseline_vs_tuned_FMN_demo.png" alt="LInf" style="width:700px;"/>
+<p>
 
 # Tuning process insights
 It is possible to plot the objective metric (median distance, the predicted value) seeing hos it changes varying two hyperparameters (e.g., learning rate and momentum):
@@ -108,7 +132,7 @@ tuning_model = ho_fmn.get_tuning_model()
 plot_contour(model=tuning_model, param_x='lr', param_y='momentum', metric_name="distance")
 ```
 
-And the results from the demo notebook is shown here:
+An example of a contour plot from the demo notebook is shown here:
 <p align="center">
 <img src="assets/images/contour_tuning_demo.png" alt="LInf" style="width:700px;"/>
 <p>
