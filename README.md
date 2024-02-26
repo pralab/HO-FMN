@@ -117,7 +117,7 @@ compare_adv_robustness(baseline_best_adv, tuned_best_adv, images)
 
 An example of baseline vs tuned FMN robustness-perturbation curves is shown here:
 <p align="center">
-<img src="assets/images/baseline_vs_tuned_FMN_demo.png" alt="LInf" style="width:700px;"/>
+<img src="assets/images/baseline_vs_tuned_FMN_demo.png" alt="LInf" style="width:420px;"/>
 <p>
 
 # Tuning process insights
