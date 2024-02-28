@@ -64,8 +64,6 @@ model, dataset, _, _ = load_data(model_id=model_id)
 subset_indices = list(range(tuning_samples, tuning_samples + attack_bs))
 dataset_frac = torch.utils.data.Subset(dataset, subset_indices)
 
-print(f"Samples: {len(subset_indices)}")
-
 dataloader = DataLoader(
     dataset=dataset_frac,
     batch_size=attack_bs,
