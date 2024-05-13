@@ -184,7 +184,7 @@ class HOFMN:
         )
 
         if self.verbose:
-            print("\t[Tuning] Starting the Hyperparameters Optimization...")
+            print("\t[Tuning] Starting the Hyperparameter Optimization...")
 
         images, labels = next(iter(self.dataloader))
         for i in range(self.trials):
@@ -202,7 +202,7 @@ class HOFMN:
             )
 
         if self.verbose:
-            print("\t[Tuning] Finished the Hyperparameters Optimization; printing the trials"
+            print("\t[Tuning] Finished the Hyperparameter Optimization; printing the trials"
                   "list and best parameters...")
             print(self.ax_client.get_trials_data_frame())
 
