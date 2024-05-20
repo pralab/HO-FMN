@@ -1,6 +1,9 @@
 import torch
 from torch import Tensor
 
+"""
+Source: https://github.com/jeromerony/adversarial-library/blob/main/adv_lib/attacks/fast_minimum_norm.py
+"""
 
 def simplex_projection(x, epsilon):
     """
@@ -71,73 +74,68 @@ def l1_ball_euclidean_projection(x, epsilon, inplace):
         return x
 
 
-def l0_projection(delta, epsilon):
+def l0_projection_(delta: Tensor, epsilon: Tensor) -> Tensor:
     """In-place l0 projection"""
     delta = delta.flatten(1)
     delta_abs = delta.abs()
-    sorted_indices = delta_abs.argsort(dim=1, descending=True).gather(1, (epsilon.long().unsqueeze(1) - 1).clamp_(
-        min=0))
-    thresholds = delta_abs.gather(1, sorted_indices)
-    delta.mul_(delta_abs >= thresholds)
+    thresholds = delta_abs.topk(k=epsilon.long().max(), dim=1).values.gather(1, (epsilon.long().unsqueeze(1) - 1).clamp_(min=0))
+    delta[delta_abs < thresholds] = 0
+    return delta
 
 
-def l1_projection(delta, epsilon):
+def l1_projection_(delta: Tensor, epsilon: Tensor) -> Tensor:
     """In-place l1 projection"""
-    l1_ball_euclidean_projection(x=delta.flatten(1), epsilon=epsilon, inplace=True)
+    delta = l1_ball_euclidean_projection(x=delta.flatten(1), epsilon=epsilon, inplace=True)
+    return delta
 
 
-def l2_projection(delta, epsilon):
+def l2_projection_(delta: Tensor, epsilon: Tensor) -> Tensor:
     """In-place l2 projection"""
     delta = delta.flatten(1)
     l2_norms = delta.norm(p=2, dim=1, keepdim=True).clamp_(min=1e-12)
     delta.mul_(epsilon.unsqueeze(1) / l2_norms).clamp_(max=1)
-
-
-def linf_projection(delta, epsilon):
-    """In-place linf projection"""
-    delta = delta.flatten(1)
-    epsilon = epsilon.unsqueeze(1)
-
-    torch.where(
-        torch.lt(epsilon, float('inf')),
-        torch.maximum(torch.minimum(delta, epsilon, out=delta), -epsilon),
-        delta,
-        out=delta
-    )
-
-
-def l0_mid_points(x0, x1, epsilon):
-    n_features = x0[0].numel()
-    delta = x1 - x0
-    l0_projection(delta=delta, epsilon=n_features * epsilon)
     return delta
 
 
-def l1_mid_points(x0, x1, epsilon):
+def linf_projection_(delta: Tensor, epsilon: Tensor) -> Tensor:
+    """In-place linf projection"""
+    delta, epsilon = delta.flatten(1), epsilon.unsqueeze(1)
+    delta = torch.clamp(delta, min=-epsilon, max=epsilon, out=delta)
+    return delta
+
+
+def l0_mid_points(x0: Tensor, x1: Tensor, epsilon: Tensor) -> Tensor:
+    n_features = x0[0].numel()
+    delta = l0_projection_(delta=x1 - x0, epsilon=n_features * epsilon)
+    return delta.view_as(x0).add_(x0)
+
+
+def l1_mid_points(x0: Tensor, x1: Tensor, epsilon: Tensor) -> Tensor:
     threshold = (1 - epsilon).unsqueeze(1)
     delta = (x1 - x0).flatten(1)
     delta_abs = delta.abs()
-    mask = delta_abs > threshold
+    mask = delta_abs <= threshold
     mid_points = delta_abs.sub_(threshold).copysign_(delta)
-    mid_points.mul_(mask)
-    return x0 + mid_points
+    mid_points[mask] = 0
+    return mid_points.view_as(x0).add_(x0)
 
 
-def l2_mid_points(x0, x1, epsilon):
+def l2_mid_points(x0: Tensor, x1: Tensor, epsilon: Tensor) -> Tensor:
     epsilon = epsilon.unsqueeze(1)
-    return x0.flatten(1).mul(1 - epsilon).add_(epsilon * x1.flatten(1)).view_as(x0)
+    return x0.flatten(1).mul(1 - epsilon).addcmul_(epsilon, x1.flatten(1)).view_as(x0)
 
 
-def linf_mid_points(x0, x1, epsilon):
+def linf_mid_points(x0: Tensor, x1: Tensor, epsilon: Tensor) -> Tensor:
     epsilon = epsilon.unsqueeze(1)
     delta = (x1 - x0).flatten(1)
-    return x0 + torch.maximum(torch.minimum(delta, epsilon, out=delta), -epsilon, out=delta).view_as(x0)
+    delta = torch.clamp(delta, min=-epsilon, max=epsilon, out=delta)
+    return delta.view_as(x0).add_(x0)
 
 
 DUAL_PROJECTION_MIDPOINTS = {
-    0: (None, l0_projection, l0_mid_points),
-    1: (float('inf'), l1_projection, l1_mid_points),
-    2: (2, l2_projection, l2_mid_points),
-    float('inf'): (1, linf_projection, linf_mid_points),
+    0: (None, l0_projection_, l0_mid_points),
+    1: (float('inf'), l1_projection_, l1_mid_points),
+    2: (2, l2_projection_, l2_mid_points),
+    float('inf'): (1, linf_projection_, linf_mid_points),
 }
 
