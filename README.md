@@ -141,4 +141,4 @@ and Innovation Programme under the project [Sec4AI4Sec - Cybersecurity for AI-Au
 ‘‘TrustML: Towards Machine Learning that Humans Can Trust’’](https://www.fondazionedisardegna.it/), CUP:
 F73C22001320007.
 
-<img src="ack/images/serics.png" alt="serics" style="width:200px;"/> &nbsp;&nbsp; <img src="ack/images/FAIR.png" alt="fair" style="width:200px;"/> &nbsp; <img src="ack/images/sec4AI4sec.png" alt="sec4ai4sec" style="width:70px;"/> &nbsp;&nbsp; <img src="ack/images/fondazione-sardegna.png" alt="fondazione_sardegna" style="width:150px;"/> &nbsp;&nbsp; <img src="ack/images/FundedbytheEU.png" alt="LInf" style="width:240px;"/>
+<img src="ack/images/SERICS.png" alt="serics" style="width:200px;"/> &nbsp;&nbsp; <img src="ack/images/FAIR.png" alt="fair" style="width:200px;"/> &nbsp; <img src="ack/images/sec4AI4sec.png" alt="sec4ai4sec" style="width:70px;"/> &nbsp;&nbsp; <img src="ack/images/fondazione-sardegna.png" alt="fondazione_sardegna" style="width:150px;"/> &nbsp;&nbsp; <img src="ack/images/FundedbytheEU.png" alt="LInf" style="width:240px;"/>
