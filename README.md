@@ -134,3 +134,9 @@ An example of a contour plot from the demo notebook is shown here:
 <p align="center">
 <img src="assets/images/contour_tuning_demo.png" alt="LInf" style="width:700px;"/>
 <p>
+
+## Acknowledgements
+HO-FMN has been developed with the support of project [SERICS (PE00000014)](https://serics.eu/);  project [FAIR (PE0000013)](https://fondazione-fair.it/) under the NRRP MUR program funded by the EU - NGEU; the European Union’s Horizon Europe Research
+and Innovation Programme under the project [Sec4AI4Sec - Cybersecurity for AI-Augmented Systems](https://www.sec4ai4sec-project.eu/), grant agreement No 101120393, and [Fondazione di Sardegna under the project
+‘‘TrustML: Towards Machine Learning that Humans Can Trust’’](https://www.fondazionedisardegna.it/), CUP:
+F73C22001320007.
